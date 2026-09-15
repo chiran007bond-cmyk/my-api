@@ -1,9 +1,10 @@
-from flask import Flask, request, Response
+from flask import Flask, Response
 import requests
+import os
 
 app = Flask(__name__)
 
-SOURCE_URL = "https://pingosms.com/api/getCodefv3"
+SOURCE_URL = os.environ.get("SOURCE_URL")
 
 
 @app.route("/")
@@ -13,18 +14,15 @@ def home():
 
 @app.route("/api/getCode")
 def get_code():
-    id_value = request.args.get("id")
-
-    if not id_value:
+    if not SOURCE_URL:
         return {
             "status": "error",
-            "message": "id is required"
-        }, 400
+            "message": "SOURCE_URL is not configured"
+        }, 500
 
     try:
         response = requests.get(
             SOURCE_URL,
-            params={"id": id_value},
             timeout=15
         )
 
