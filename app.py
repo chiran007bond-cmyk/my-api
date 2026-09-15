@@ -1,10 +1,14 @@
-from flask import Flask, Response
-import requests
+from flask import Flask, request, jsonify
 import os
 
 app = Flask(__name__)
 
-SOURCE_URL = os.environ.get("SOURCE_URL")
+SOURCES = {
+    "account1": os.environ.get("SOURCE_ACCOUNT1"),
+    "account2": os.environ.get("SOURCE_ACCOUNT2"),
+    "account3": os.environ.get("SOURCE_ACCOUNT3"),
+    "account4": os.environ.get("SOURCE_ACCOUNT4"),
+}
 
 
 @app.route("/")
@@ -14,32 +18,31 @@ def home():
 
 @app.route("/api/getCode")
 def get_code():
-    if not SOURCE_URL:
-        return {
+    account_id = request.args.get("id")
+
+    if not account_id:
+        return jsonify({
             "status": "error",
-            "message": "SOURCE_URL is not configured"
-        }, 500
+            "message": "id is required"
+        }), 400
 
-    try:
-        response = requests.get(
-            SOURCE_URL,
-            timeout=15
-        )
-
-        return Response(
-            response.content,
-            status=response.status_code,
-            content_type=response.headers.get(
-                "Content-Type",
-                "application/json"
-            )
-        )
-
-    except requests.RequestException:
-        return {
+    if account_id not in SOURCES:
+        return jsonify({
             "status": "error",
-            "message": "Source API request failed"
-        }, 502
+            "message": "Unknown ID"
+        }), 404
+
+    if not SOURCES[account_id]:
+        return jsonify({
+            "status": "error",
+            "message": "Source not configured"
+        }), 500
+
+    return jsonify({
+        "status": "success",
+        "id": account_id,
+        "source_configured": True
+    })
 
 
 if __name__ == "__main__":
